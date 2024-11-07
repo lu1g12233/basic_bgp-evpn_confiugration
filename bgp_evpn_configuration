@@ -1,0 +1,307 @@
+Nexus1
+
+feature ospf
+system jumbomtu 9216
+router ospf 10
+interface ethernet 1/49
+no switchport
+ip address 10.10.10.1/30
+ip router ospf 10 area 0
+no shutdown
+exit
+interface loopback 0
+ip address 1.1.1.1/32
+ip router ospf 10 area 0
+exit
+show ip ospf neighbors
+feature bgp
+feature interface-vlan
+feature vn-segment-vlan-based
+feature nv overlay
+nv overlay evpn
+fabric formwarding anycast-gateway-mac <mac-address>
+interface nve1
+no shutdown
+source-interface lo0
+host-reachability protocol bgp
+router bgp 65535
+router-id 1.1.1.1
+neighbor 2.2.2.2
+remote-as 65535
+update-source loopback 0
+address-family l2vpn evpn
+send-community extended
+vlan 101
+vn-segment 900001
+exit
+vrf context Tenant-1
+vni 900001
+rd auto
+address-family ipv4 unicast
+route-target both auto
+route-target bout auto evpn
+exit
+exit
+interface vlan 101
+no shutdown
+vrf member Tenant-1
+ip forward
+exit
+int nve1
+member vni 5000
+supress-arp
+ingress-replication protocol bgp
+member vni 900001 associate-vrf
+exit
+router bgp 65535
+vrf Tenant-1
+address-family ipv4 unicast
+advertise l2vpn evpn
+exit
+exit
+vlan 1000
+vn-segment 5000
+exit
+interaface vlan 1000
+no shutdown
+vrf member Tenant-1
+ip address 192.168.0.1/24
+fabric forwarding mode anycast-gateway
+exit
+evpn
+vni 5000 l2
+rd auto
+route-target import auto
+route target export auro
+exit
+interface eth1/1
+switchport
+switchport access vlan 1000
+no shutdown
+exit
+exit
+copy running-config startup-config
+vlan 1001
+vn-segment 5000
+exit
+interface vlan 1001
+no shutdown
+vrf member Tenant-1
+ip address 192.168.10.1/24
+fabric forwarding mode anycast-gateway
+exit
+interface nve 1
+member vni 5005
+suppress-arp
+ingress-replication protocol bgp
+exit
+exit
+evpn
+vni 5005 l2
+rd auto
+route-target import auto
+route-target export auto
+exit
+exit
+vrf context Tenant-2
+vni 900002
+rd auto
+address-family ipv4 unicast
+route-target both auto
+route-target both auto evpn
+vlan 102
+vn-segment 900002
+interface vlan 102
+no shutdown
+vrf member Tenant-2
+ip forward
+vlan 900
+vn-segment 6000
+interface vlan 900
+no shut
+vrf member Tenant-2
+ip address 192.168.0.1/24
+fabric forwarding mode anycast-gateway
+interface eth 1/2
+switchport access vlan 900
+no shut
+interface nve1
+member vni 900002 associate-vrf
+member vni 6000
+supress-arp
+ingress-replication protocol bgp
+evpn
+vni 6000 l2
+rd auto
+route-target import auto
+route-target export auto
+
+
+!To verify BGP Neighbors
+show bgp l2vpn evpn summary
+
+!To check VTEPs
+show nve peers !NOTE: compared to normal vxlan, nve peers should appear as the learntype of this nve is via Control Plane
+
+!To show all the nves associated with VTEP. 
+show nve vni
+
+!To show the IP to MAC binding 
+show ip arp suppression-cache detail
+
+!TO show VXLAN to VNI Bindings
+show vxlan
+
+!To show all the mac-address that have been learned
+show l2route evpn mac all
+
+!Another way to see the mac-address to IP bindings
+show l2route evpn mac-ip all
+
+!How to see all the details in the BGP database
+shopw bgp l2vpn evpn
+
+
+
+
+
+Nexus2
+
+feature ospf
+system jumbomtu 9216
+router ospf 10
+interface ethernet 1/49
+no switchport
+ip address 10.10.10.2/30
+ip router ospf 10 area 0 
+no shutdown
+exit
+interface loopback 0
+ip address 2.2.2.2/32
+ip router ospf 10 area 0
+exit
+show ip ospf neighbors
+feature bgp
+feature interface-vlan
+feature vn-segment-vlan-based
+feature nv overlay
+nv overlay evpn
+fabric formwarding anycast-gateway-mac <mac-address>
+interface nve1
+no shutdown
+source-interface lo0
+host-reachability protocol bgp
+router bgp 65535
+router-id 2.2.2.2
+neighbor 1.1.1.1
+remote-as 65535
+update-source loopback 0
+address-family l2vpn evpn
+send-community extended
+vlan 101
+vn-segment 900001
+vrf context Tenant-1
+vni 900001
+rd auto
+address-family ipv4 unicast
+route-target both auto
+route-target borth auto evpn
+exit
+exit
+interaface vlan 101
+no shutdown
+vrf member Tenant-1
+ip forward
+exit
+interface nve1
+member vni 5000
+supress-arp
+ingress-replication protocol bgp
+member vni 900001 associate-vrf
+exit
+router bgp 65535
+vrf Tenant-1
+address-family ipv4 unicast
+advertise l2vpn evpn
+exit
+exit
+vlan 1000
+vn-segment 5000
+exit
+interface vlan 1000
+no shutdown
+vrf member Tenant-1
+ip address 192.168.0.1/24
+fabric forwarding mode anycast-gateway
+evpn
+vni 5000 l2
+rd auto
+route-target import auto
+route-target export auto
+exit
+exit
+interface eth 1/1
+switchport 
+switchport access vlan 1000
+no shutdown
+exit
+exit
+copy running-config startup-config
+vlan 1001
+vn-segment 5000
+exit
+interface vlan 1001
+no shutdown
+vrf member Tenant-1
+ip address 192.168.10.1/24
+fabric forwarding mode anycast-gateway
+exit
+interface nve1
+member vni 5005
+supress-arp
+ingress-replication protocol bgp
+exit
+exit
+evpn
+vni 5005 l2
+rd auto
+route-target import auto
+route-target export auto
+exit
+exit
+conf t
+vrf context tenant-2
+vni 900002
+rd auto
+address-family ipv4 unicast
+route-target both auto
+route-target both auto evpn
+vlan 102
+vn-segment 900002
+interface vlan 102
+no shutdown
+vrf member tenant-2
+ip forward
+vlan 900
+vn-segment segment 6000
+interface vlan 900
+no shutdown
+vrf member tenant-2
+ip address 192.168.01/24
+fabric forwarding mode anycast-gateway
+interface eth1/2
+switchport
+switchport access vlan 900
+no shut
+interface nve1
+member vni 900002 associate vrf
+member vni 6000
+supress-arp
+ingress-replication protocol bgp
+evpn
+vni 6000 l2
+rd auto
+route-target import auto
+route-target export auto
+
+
